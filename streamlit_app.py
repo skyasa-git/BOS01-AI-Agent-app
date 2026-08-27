@@ -1,15 +1,11 @@
 import streamlit as st
-from transformers import pipeline
+from huggingface_hub import InferenceClient
 
 st.set_page_config(page_title="BOS01 AI Agent", page_icon="🤖")
 st.title("🤖 BOS01 AI Agent")
 st.caption("AI-powered assistant for data center operations")
 
-@st.cache_resource
-def load_model():
-    return pipeline("text-generation", model="distilgpt2")
-
-generator = load_model()
+client = InferenceClient()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -25,7 +21,6 @@ if prompt := st.chat_input("Ask about data center operations..."):
 
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            result = generator(prompt, max_length=150, num_return_sequences=1, do_sample=True, temperature=0.7)
-            response = result[0]["generated_text"]
+            response = client.text_generation(prompt, model="gpt2", max_new_tokens=150)
         st.markdown(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
