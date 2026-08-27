@@ -1,28 +1,31 @@
 import streamlit as st
 from transformers import pipeline
 
-st.set_page_config(page_title="BOS01 AI Agent", page_icon="🧠")
-st.title("🧠 BOS01 AI Agent")
-st.caption("👤 Created by Sai Kyasa | ⚡ Powered by NVIDIA CUDA | Phi-2 Model")
+st.set_page_config(page_title="BOS01 AI Agent", page_icon="🤖")
+st.title("🤖 BOS01 AI Agent")
+st.caption("AI-powered assistant for data center operations")
 
 @st.cache_resource
 def load_model():
-    return pipeline("text-generation", model="microsoft/phi-2")
+    return pipeline("text-generation", model="distilgpt2")
 
-bot = load_model()
+generator = load_model()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 for msg in st.session_state.messages:
-    st.chat_message(msg["role"]).write(msg["content"])
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-if prompt := st.chat_input("Ask me anything..."):
+if prompt := st.chat_input("Ask about data center operations..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    st.chat_message("user").write(prompt)
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-    result = bot(f"User: {prompt}\nAssistant:", max_new_tokens=200, do_sample=True)
-    reply = result[0]['generated_text'].split("Assistant:")[-1].strip()
-
-    st.session_state.messages.append({"role": "assistant", "content": reply})
-    st.chat_message("assistant").write(reply)
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            result = generator(prompt, max_length=150, num_return_sequences=1, do_sample=True, temperature=0.7)
+            response = result[0]["generated_text"]
+        st.markdown(response)
+    st.session_state.messages.append({"role": "assistant", "content": response})
